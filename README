@@ -1,0 +1,90 @@
+Gentle reader,
+
+Several years ago Derek Jones ran across an odd-looking graph I had created to 
+solve the problem of visualizing processor performance variation across thousands
+of processors, two benchmarks and four CPU power bounds.  The graph showed up in
+several presentations I made (and I'm still hauling it out from time to time),
+but it was never published.  Derek asked if he could include it in his book,
+I was agreeable, and so here it is:  data, source, and pdf.
+
+I have not cleaned up the code.  It was not meant to see the light of day,
+and I do not consider myself to be a particularly sophisticated R programmer.
+That said, the code is an example of how much flexibility R provides.
+
+Here is the manifest:
+
+blr_nas.dat		The dataset, mostly hardware performance counters 
+			and machine configuration descriptions.  I no longer
+			recall why the column header names were changed.
+			Perhaps I wanted to use shorter names in the graph
+			code.  This was a collation of thousands of text 
+			files containing the original data.
+
+blr_nas.R		An R script that takes blr_nas.dat as input and 
+			rearranges the data to extract effect clock frequencies
+			and slowdown.  Run within an R session as
+				source("blr_nas.R")
+
+s2.R			This script contains the graphing code and sources
+scale.R			scale.R. The output is the graph s2.pdf.  Run within
+s2.pdf			the same R session as 
+				source("s2.R")
+
+The machine this ran on was the now-decommissioned cab cluster at LLNL.  The
+machine is described here:  
+	https://hpc.llnl.gov/hardware/platforms/cab%E2%80%94decommissioned
+
+The processor used was a Sandy Bridge E5-2670, described here:
+	https://ark.intel.com/content/www/us/en/ark/products/64595/intel-xeon-processor-e5-2670-20m-cache-2-60-ghz-8-00-gt-s-intel-qpi.html
+
+The two benchmarks used were drawn from the NASA Ames Parallel Benchmark suite.
+	https://www.nas.nasa.gov/publications/npb.html
+
+EP is "embarrassingly parallel" and simply spins in the CPU generating
+random numbers.  Its performance is directly proportional to the CPU
+clock frequency.
+
+MG is a "multigrid" kernel that stresses both the CPU and memory access.
+Its performance depends on a combination of CPU clock frequencies and 
+memory access times.  
+
+Sandy Bridge was Intel's first processor that featured their "Running
+Average Power Limit" (RAPL) technology.  Users could dial in a power
+limit to the processor and the CPU clock frequency would be dithered
+in order to maintain power draw at or below that limit.  Doing so,
+however, amplified the underlying process variation across the processors.
+Less-efficient processors required more power and ran more slowly when
+power was limited.
+
+I don't recall the lowest supported power bound on this particular part,
+but 30 Watts was well underneath that limit.  The processor gamely attempted
+to comply, but despite massive slowdowns we were seeing power draws of a
+few Watts over that limit.  
+
+The five worst processors (in terms of slowdown) are circled for the 
+95 W MG test.  Those same five processor are circled again in the 
+remainder of the tests.  Despite working with significant run-to-run
+variation, bad processors are usually bad all the time.
+
+The data visualization problem here was how to display 4x2.2386 processors
+results that varied over two orders of magnitude.  Splitting the graph
+into three parts solved the scaling problem, and the use of box-and-whisker
+plots within the scatterplot clarified the data distribution.  When I 
+use this graph in presentations, I begin with the complete image generated
+here and then zoom into each individual graph in turn.
+
+The x-axis is the slowdown (in execution time) compared to the fastest
+unbounded run on any processor for that benchmark.  The y-axis is observed
+average clock frequency.
+
+The lesson here is not just that processor variation exists, but that 
+power caps will exaggerate that variation, and more important, different
+applications will react to that variation differently.  We can't just
+characterize the processors once and apply a coefficient to model expected
+slowdown.
+
+Barry Rountree
+rountree@llnl.gov
+
+
+
